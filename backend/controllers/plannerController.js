@@ -1,4 +1,5 @@
 import Planner from "../models/Planner.js";
+import User from "../models/User.js";
 
 // ================= ADD TASK =================
 export const addTask = async (req, res) => {
@@ -42,12 +43,42 @@ export const toggleTask = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    // 🔐 security check
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Not authorized" });
     }
 
+    // ⭐ save old state (ANTI-CHEAT)
+    const wasCompleted = task.completed;
+
+    // 🔄 toggle completion
     task.completed = !task.completed;
     await task.save();
+
+    // 🔥 STREAK LOGIC (only false → true)
+    if (!wasCompleted && task.completed) {
+      const user = await User.findById(req.user._id);
+
+      const today = new Date().toDateString();
+      const lastDate = user.lastCompletedDate
+        ? new Date(user.lastCompletedDate).toDateString()
+        : null;
+
+      // ⭐ only once per day
+      if (lastDate !== today) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        if (lastDate === yesterday.toDateString()) {
+          user.streak += 1; // continue streak
+        } else {
+          user.streak = 1; // reset streak
+        }
+
+        user.lastCompletedDate = new Date();
+        await user.save();
+      }
+    }
 
     res.json(task);
   } catch (error) {
@@ -64,6 +95,7 @@ export const deleteTask = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
+    // 🔐 security check
     if (task.user.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: "Not authorized" });
     }

@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import API from "../api/axios";
 
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
+  const [streak, setStreak] = useState(0);
 
   // ================= FETCH TASKS =================
   const fetchTasks = async () => {
@@ -15,8 +17,19 @@ const Dashboard = () => {
     }
   };
 
+  // ================= FETCH USER (STREAK) =================
+  const fetchUser = async () => {
+    try {
+      const { data } = await API.get("/user/me");
+      setStreak(data.streak);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     fetchTasks();
+    fetchUser();
   }, []);
 
   // ================= ADD TASK =================
@@ -28,6 +41,7 @@ const Dashboard = () => {
       await API.post("/planner", { title });
       setTitle("");
       fetchTasks();
+      fetchUser();
     } catch (error) {
       console.log(error);
     }
@@ -38,6 +52,7 @@ const Dashboard = () => {
     try {
       await API.put(`/planner/${id}`);
       fetchTasks();
+      fetchUser();
     } catch (error) {
       console.log(error);
     }
@@ -62,9 +77,35 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-100 p-4 md:p-8">
       <div className="max-w-2xl mx-auto">
         {/* Title */}
-        <h1 className="text-3xl font-bold mb-6">
+        <h1 className="text-3xl font-bold mb-2">
           📅 Smart Study Planner
         </h1>
+
+        {/* 🧩 Brain Gym Button */}
+        <Link
+          to="/brain-gym"
+          className="inline-block mb-4 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition"
+        >
+          🧩 Brain Gym
+        </Link>
+
+        {/* 🔥 Streak Badge */}
+        <div className="mb-6 inline-flex items-center gap-2 bg-orange-100 text-orange-600 px-4 py-2 rounded-full font-semibold animate-pulse">
+          🔥 {streak} Day Study Streak
+        </div>
+
+        {/* 🏆 Milestone Message */}
+        {streak >= 7 && (
+          <div className="mb-4 text-green-600 font-semibold">
+            🏆 Amazing! 7 day consistency!
+          </div>
+        )}
+
+        {streak >= 30 && (
+          <div className="mb-4 text-purple-600 font-semibold">
+            👑 Legend! 30 day streak!
+          </div>
+        )}
 
         {/* Progress Bar */}
         <div className="mb-6">
@@ -101,9 +142,8 @@ const Dashboard = () => {
               key={task._id}
               className="bg-white p-4 rounded-lg shadow flex justify-between items-center"
             >
-              {/* Left side */}
+              {/* Left */}
               <div className="flex items-center gap-3">
-                {/* Checkbox */}
                 <input
                   type="checkbox"
                   checked={task.completed}
@@ -111,7 +151,6 @@ const Dashboard = () => {
                   className="w-5 h-5 cursor-pointer"
                 />
 
-                {/* Title */}
                 <span
                   className={`${
                     task.completed ? "line-through text-gray-400" : ""
@@ -121,7 +160,7 @@ const Dashboard = () => {
                 </span>
               </div>
 
-              {/* Right side */}
+              {/* Right */}
               <div className="flex items-center gap-3">
                 <span
                   className={`text-sm font-semibold ${
@@ -131,7 +170,6 @@ const Dashboard = () => {
                   {task.completed ? "Done" : "Pending"}
                 </span>
 
-                {/* Delete button */}
                 <button
                   onClick={() => deleteTask(task._id)}
                   className="text-red-500 hover:text-red-700 font-bold"

@@ -5,6 +5,10 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import plannerRoutes from "./routes/plannerRoutes.js";
 import protect from "./middleware/authMiddleware.js";
+import userRoutes from "./routes/userRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
+import puzzleRoutes from "./routes/puzzleRoutes.js";
+
 
 dotenv.config();
 connectDB();
@@ -18,6 +22,12 @@ app.use(cors());
 // routes
 app.use("/api/auth", authRoutes);
 app.use("/api/planner", plannerRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/ai", aiRoutes);
+app.use("/api/puzzle", puzzleRoutes);
+
+
+
 
 // protected test route
 app.get("/api/protected", protect, (req, res) => {

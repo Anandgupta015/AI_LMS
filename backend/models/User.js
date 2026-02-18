@@ -21,6 +21,15 @@ const userSchema = new mongoose.Schema(
       required: true,
       minlength: 6,
     },
+
+    // 🔥 ADD THESE (streak system)
+    streak: {
+      type: Number,
+      default: 0,
+    },
+    lastCompletedDate: {
+      type: Date,
+    },
   },
   {
     timestamps: true,
@@ -34,7 +43,6 @@ userSchema.pre("save", async function () {
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
-
 
 // 🔑 Password compare method
 userSchema.methods.matchPassword = async function (enteredPassword) {
